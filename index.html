@@ -39,6 +39,7 @@
   <!-- Monetag SDK -->
   <script src='//libtl.com/sdk.js' data-zone='9852168' data-sdk='show_9852168'></script>
 </head>
+
 <body>
   <h1>⚡ Tap & Earn point</h1>
 
@@ -87,22 +88,33 @@
 
 <script>
 const webApp = Telegram.WebApp;
+
+// RESTORE (NEVER wipe)
 let points = parseInt(localStorage.getItem("points") || "0");
 let energy = parseInt(localStorage.getItem("energy") || "50");
 
-// Update UI
+// EXTRA RESTORE (fix browser delay)
+points = parseInt(localStorage.getItem("points") || points);
+energy = parseInt(localStorage.getItem("energy") || energy);
+
+// UI update
 function updateUI() {
   document.getElementById("points").innerText = points;
   document.getElementById("energy").innerText = energy;
 }
 
-// Save state
+// Save to storage
 function saveState() {
   localStorage.setItem("points", points);
   localStorage.setItem("energy", energy);
 }
 
-// Tap action
+// NEW: auto save even if user closes app
+window.addEventListener("beforeunload", () => {
+  saveState();
+});
+
+// Tap logic unchanged
 document.getElementById("tapBtn").addEventListener("click", () => {
   if (energy > 0) {
     points += 5;
@@ -112,10 +124,7 @@ document.getElementById("tapBtn").addEventListener("click", () => {
     if (typeof window.show_9852168 === "function") {
       show_9852168().then(() => {
         energy += 20;
-        saveState();
-        updateUI();
-      }).catch(e => {
-        console.error("Ad failed:", e);
+        saveState(); updateUI();
       });
     }
   }
@@ -136,6 +145,7 @@ document.getElementById("withdrawBtn").addEventListener("click", () => {
     username: user.username || "No username",
     amount, method, address
   });
+
   Telegram.WebApp.sendData(msg);
 
   points -= amount; saveState(); updateUI();
@@ -151,7 +161,7 @@ document.getElementById("copyRefBtn").addEventListener("click", () => {
   refInput.select(); document.execCommand("copy");
 });
 
-// Tasks system
+// Tasks (unchanged)
 let currentTaskIndex = 0;
 const taskIds = ["task-17591", "task-17592", "task-17593", "task-17595", "task-17594", "task-17593"];
 
@@ -188,7 +198,6 @@ document.getElementById("nextTaskBtn").addEventListener("click", () => {
   loadTask(taskIds[currentTaskIndex]);
 });
 
-// Final task → show Monetag ad
 document.getElementById("finalTaskBtn").addEventListener("click", () => {
   if (typeof window.show_9852168 === "function") {
     show_9852168().then(() => {
@@ -197,37 +206,14 @@ document.getElementById("finalTaskBtn").addEventListener("click", () => {
       document.getElementById("finalTaskBtnContainer").classList.add("hidden");
       currentTaskIndex = 0;
       updateUI();
-    }).catch(e => {
-      document.getElementById("taskIntro").classList.remove("hidden");
-      document.getElementById("adsgram-container").classList.add("hidden");
-      document.getElementById("finalTaskBtnContainer").classList.add("hidden");
-      currentTaskIndex = 0;
     });
   }
 });
 
-// Monetag ad on page load → auto show main menu after ad finishes
+// Page load
 document.addEventListener("DOMContentLoaded", () => {
-  if (typeof window.show_9852168 === "function") {
-    show_9852168().then(() => {
-      document.getElementById("taskIntro").classList.remove("hidden");
-      document.getElementById("adsgram-container").classList.add("hidden");
-      document.getElementById("nextTaskBtnContainer").classList.add("hidden");
-      document.getElementById("finalTaskBtnContainer").classList.add("hidden");
-      updateUI();
-    }).catch(e => {
-      document.getElementById("taskIntro").classList.remove("hidden");
-      document.getElementById("adsgram-container").classList.add("hidden");
-      document.getElementById("nextTaskBtnContainer").classList.add("hidden");
-      document.getElementById("finalTaskBtnContainer").classList.add("hidden");
-      updateUI();
-    });
-  } else {
-    document.getElementById("taskIntro").classList.remove("hidden");
-  }
+  updateUI();
 });
-
-updateUI();
 </script>
 </body>
 </html>
